@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>A3 – Computer Vision Demo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="styles.css" />
+  <!-- OpenCV.js (async is fine; app.js waits until it's ready) -->
+  <script async src="https://docs.opencv.org/4.x/opencv.js"></script>
+</head>
+<body>
+  <header>
+    <h1>A3 – Computer Vision Demo</h1>
+    <div class="controls">
+      <label class="btn">
+        Load Images
+        <!-- restrict to jpeg/png to avoid HEIC decoding problems -->
+        <input id="fileInput" type="file" accept="image/jpeg,image/png" multiple hidden />
+      </label>
+      <button id="loadDemo" title="Load a built-in test image to verify everything">Load Test Image</button>
+
+      <button id="camStart">Webcam Start</button>
+      <button id="camCapture" disabled>Capture</button>
+      <button id="camStop" disabled>Stop</button>
+
+      <button id="prev" disabled>Prev</button>
+      <button id="next" disabled>Next</button>
+
+      <select id="mode" title="Choose a view/mode">
+        <option value="original">Original</option>
+        <option value="grad_mag">Gradient – Magnitude</option>
+        <option value="grad_angle">Gradient – Angle (HSV)</option>
+        <option value="log">Laplacian of Gaussian (LoG)</option>
+      </select>
+
+      <!-- display-only knobs -->
+      <label class="btn" title="Strength of edge visibility (display only)">
+        Edge Boost
+        <input type="range" id="edgeBoost" min="0" max="2" step="1" value="1" style="width:120px">
+      </label>
+      <label class="btn" title="Process at half size (faster, thicker edges)">
+        <input type="checkbox" id="halfRes"> Half-Res
+      </label>
+
+      <button id="save" disabled>Save PNG</button>
+      <button id="exportAll1" disabled>Export All (Task 1)</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="stage">
+      <video id="video" playsinline autoplay muted></video>
+      <canvas id="canvas"></canvas>
+    </div>
+    <div id="status">Loading…</div>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
