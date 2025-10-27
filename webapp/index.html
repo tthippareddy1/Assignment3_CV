@@ -5,11 +5,14 @@
   <title>A3 – Computer Vision Demo</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="styles.css" />
+  <!-- OpenCV.js -->
   <script async src="https://docs.opencv.org/4.x/opencv.js"></script>
+  <meta http-equiv="Cache-Control" content="no-store" />
 </head>
 <body>
   <header>
     <h1>A3 – Computer Vision Demo</h1>
+
     <div class="controls">
       <label class="btn">
         Load Images
@@ -33,27 +36,29 @@
         <!-- Task 2 -->
         <option value="edge_simple">Edge – NMS + Hysteresis</option>
         <option value="corners_harris">Corner – Harris</option>
+        <!-- Task 3 -->
+        <option value="boundary_contour">Boundary – Contour (Task 3)</option>
       </select>
 
-      <!-- Display / algo knobs -->
-      <label class="btn" title="Strength of edge visibility (display only)">
+      <!-- Common knobs -->
+      <label class="btn" title="Display-only boost for edges & LoG">
         Edge Boost <input type="range" id="edgeBoost" min="0" max="2" step="1" value="1" style="width:110px">
       </label>
       <label class="btn" title="Process at half size (faster)">
         <input type="checkbox" id="halfRes"> Half-Res
       </label>
 
-      <!-- Edge params -->
-      <label class="btn" title="Low threshold for hysteresis (0-255)">
+      <!-- Edge / Boundary thresholds (shared) -->
+      <label class="btn" title="Low threshold for hysteresis / Canny (0-255)">
         Low T <input type="range" id="edgeLow" min="0" max="255" step="1" value="15" style="width:120px">
       </label>
-      <label class="btn" title="High threshold for hysteresis (0-255)">
+      <label class="btn" title="High threshold for hysteresis / Canny (0-255)">
         High T <input type="range" id="edgeHigh" min="0" max="255" step="1" value="40" style="width:120px">
       </label>
-      <label class="btn" title="Use percentile-based automatic thresholds (recommended)">
+      <label class="btn" title="Use auto thresholds (percentile / Otsu)">
         <input type="checkbox" id="edgeAuto" checked> Auto
       </label>
-      <label class="btn" title="Show binary edge map instead of color overlay">
+      <label class="btn" title="Show binary map (edges or mask)">
         <input type="checkbox" id="edgeBinary"> Binary
       </label>
 
@@ -67,13 +72,27 @@
       <label class="btn" title="Corner response threshold (0-255)">
         Th <input type="range" id="hTh" min="0" max="255" step="1" value="70" style="width:120px">
       </label>
-      <label class="btn" title="Visualize Harris response as heat instead of just circles">
+      <label class="btn" title="Visualize Harris response as heat">
         <input type="checkbox" id="hHeat"> Heatmap
+      </label>
+
+      <!-- Task 3 (Boundary) params -->
+      <label class="btn" title="Morphological closing kernel (odd)">
+        CloseK <input type="range" id="bClose" min="1" max="15" step="2" value="5" style="width:90px">
+      </label>
+      <label class="btn" title="Ignore contours smaller than this % of image area">
+        MinArea% <input type="range" id="bMinArea" min="0" max="30" step="1" value="2" style="width:110px">
+      </label>
+      <label class="btn" title="Polygon approximation epsilon (% of perimeter)">
+        Polyε% <input type="range" id="bEps" min="0" max="5" step="0.5" value="1.5" style="width:100px">
+      </label>
+      <label class="btn" title="Only accept contours whose centroid is within this % of image diagonal from center">
+        CenterR% <input type="range" id="bCenterR" min="0" max="80" step="5" value="40" style="width:110px">
       </label>
 
       <button id="save" disabled>Save PNG</button>
       <button id="exportAll1" disabled>Export All (Task 1)</button>
-      <button id="exportAll2">Export All (Task 2)</button> 
+      <button id="exportAll2" disabled>Export All (Task 2)</button>
     </div>
   </header>
 
@@ -85,11 +104,7 @@
     <div id="status">Loading…</div>
   </main>
 
-  <!-- force the browser to fetch the fresh JS -->
-  
- 
-  <script src="app.js?v=harris-fallback-2"></script>
-
-
+  <!-- Cache-bust the JS -->
+  <script src="app.js?v=task3-1"></script>
 </body>
 </html>
