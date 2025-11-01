@@ -34,17 +34,11 @@ const els = {
   arucoShowIds:     document.getElementById('arucoShowIds'),
   arucoDilate:      document.getElementById('arucoDilate'),
 
-  // Task 5
-  sam2PromptType:   document.getElementById('sam2PromptType'),
-  sam2LoadModel:    document.getElementById('sam2LoadModel'),
-  sam2CompareMode:  document.getElementById('sam2CompareMode'),
-
   save:        document.getElementById('save'),
   exportAll1:  document.getElementById('exportAll1'),
   exportAll2:  document.getElementById('exportAll2'),
   exportAll3:  document.getElementById('exportAll3'),
   exportAll4:  document.getElementById('exportAll4'),
-  exportAll5:  document.getElementById('exportAll5'),
   video:       document.getElementById('video'),
   canvas:      document.getElementById('canvas'),
   status:      document.getElementById('status')
@@ -91,7 +85,6 @@ function enableNav(enable) {
   els.exportAll2.disabled = !enable || !state.images.length;
   els.exportAll3.disabled = !enable || !state.images.length;
   els.exportAll4.disabled = !enable || !state.images.length;
-  if (els.exportAll5) els.exportAll5.disabled = !enable || !state.images.length;
 }
 function showVideo(show) { els.video.style.display = show ? 'block' : 'none'; }
 function showCanvas(show) { els.canvas.style.display = show ? 'block' : 'none'; }
@@ -248,128 +241,38 @@ function logMat(src) {
   return lap8;
 }
 
-
-
-
-
-// // ---------- Task 2 ----------
-// function edgeSimple(src, returnBinary=true) {
-//   const work = maybeResize(src);
-//   const gray = toGray(work);
-//   cv.GaussianBlur(gray, gray, new cv.Size(3,3), 0.8, 0.8);
-//   const dx = new cv.Mat(), dy = new cv.Mat();
-//   const mag = new cv.Mat(), ang = new cv.Mat();
-//   cv.Sobel(gray, dx, cv.CV_32F, 1, 0, 3, 1, 0, cv.BORDER_DEFAULT);
-//   cv.Sobel(gray, dy, cv.CV_32F, 0, 1, 3, 1, 0, cv.BORDER_DEFAULT);
-//   cv.magnitude(dx, dy, mag); cv.phase(dx, dy, ang, true);
-//   const rows = mag.rows, cols = mag.cols;
-//   const nms = cv.Mat.zeros(rows, cols, cv.CV_32F);
-//   const M = mag.data32F, A = ang.data32F, N = nms.data32F;
-//   for (let y = 1; y < rows - 1; y++) {
-//     const r = y * cols;
-//     for (let x = 1; x < cols - 1; x++) {
-//       const i = r + x; let a = A[i];
-//       if (a < 0) a += 180; if (a >= 180) a -= 180;
-//       let o1 = 0, o2 = 0;
-//       if (a < 22.5 || a >= 157.5) { o1 = -1; o2 = +1; }
-//       else if (a < 67.5) { o1 = -cols - 1; o2 = +cols + 1; }
-//       else if (a < 112.5) { o1 = -cols; o2 = +cols; }
-//       else { o1 = -cols + 1; o2 = +cols - 1; }
-//       const m = M[i];
-//       if (m >= M[i + o1] && m >= M[i + o2]) N[i] = m;
-//     }
-//   }
-//   const nms8 = new cv.Mat();
-//   cv.normalize(nms, nms, 0, 255, cv.NORM_MINMAX);
-//   nms.convertTo(nms8, cv.CV_8U);
-//   let high = 40, low = 15;
-//   if (!els.edgeAuto || els.edgeAuto.checked) {
-//     high = percentileFrom8U(nms8, 85);
-//     low  = Math.max(5, Math.round(0.4 * high));
-//     if (els.edgeHigh) els.edgeHigh.value = String(high);
-//     if (els.edgeLow)  els.edgeLow.value  = String(low);
-//   } else {
-//     high = +els.edgeHigh.value; low = +els.edgeLow.value;
-//   }
-//   const edges = cv.Mat.zeros(rows, cols, cv.CV_8U);
-//   const D = nms8.data, E = edges.data; const STR=255, WEAK=128;
-//   for (let i = 0; i < D.length; i++) { const v = D[i]; if (v >= high) E[i] = STR; else if (v >= low) E[i] = WEAK; }
-//   const stack = [];
-//   for (let i = 0; i < E.length; i++) if (E[i] === STR) stack.push(i);
-//   while (stack.length) {
-//     const p = stack.pop(); const y = (p/cols)|0, x = p - y*cols;
-//     for (let yy = y-1; yy <= y+1; yy++) for (let xx = x-1; xx <= x+1; xx++) {
-//       if (yy<=0||yy>=rows-1||xx<=0||xx>=cols-1) continue;
-//       const q = yy*cols + xx;
-//       if (E[q] === WEAK) { E[q] = STR; stack.push(q); }
-//     }
-//   }
-//   for (let i = 0; i < E.length; i++) E[i] = (E[i] === STR) ? 255 : 0;
-//   const kernel = cv.Mat.ones(3,3,cv.CV_8U); cv.dilate(edges, edges, kernel); kernel.delete();
-//   if (returnBinary || (els.edgeBinary && els.edgeBinary.checked)) {
-//     const out = new cv.Mat(); cv.cvtColor(edges, out, cv.COLOR_GRAY2RGB);
-//     gray.delete(); dx.delete(); dy.delete(); mag.delete(); ang.delete(); nms.delete(); nms8.delete(); work.delete();
-//     return { out, count: cv.countNonZero(edges) };
-//   } else {
-//     const base = new cv.Mat();
-//     cv.cvtColor(work, base, cv.COLOR_RGBA2RGB);
-//     const red = new cv.Mat(base.rows, base.cols, cv.CV_8UC3, new cv.Scalar(255,0,0,0));
-//     const edgeRGB = new cv.Mat(); red.copyTo(edgeRGB, edges);
-//     const out = new cv.Mat(); cv.addWeighted(base, 0.6, edgeRGB, 1.0, 0, out);
-//     const count = cv.countNonZero(edges);
-//     gray.delete(); dx.delete(); dy.delete(); mag.delete(); ang.delete(); nms.delete(); nms8.delete(); edges.delete(); base.delete(); red.delete(); edgeRGB.delete(); work.delete();
-//     return { out, count };
-//   }
-// }
-
-// ---------- Task 2: Edge – NMS + Hysteresis (robust, no raw array access) ----------
-function edgeSimple(src, returnBinary = true) {
+// ---------- Task 2 ----------
+function edgeSimple(src, returnBinary=true) {
   const work = maybeResize(src);
   const gray = toGray(work);
   cv.GaussianBlur(gray, gray, new cv.Size(3,3), 0.8, 0.8);
-
-  // Gradients
-  const dx = new cv.Mat(), dy = new cv.Mat(), mag = new cv.Mat(), ang = new cv.Mat();
+  const dx = new cv.Mat(), dy = new cv.Mat();
+  const mag = new cv.Mat(), ang = new cv.Mat();
   cv.Sobel(gray, dx, cv.CV_32F, 1, 0, 3, 1, 0, cv.BORDER_DEFAULT);
   cv.Sobel(gray, dy, cv.CV_32F, 0, 1, 3, 1, 0, cv.BORDER_DEFAULT);
-  // cartToPolar gives BOTH magnitude and angle (avoid cv.phase variations)
-  cv.cartToPolar(dx, dy, mag, ang, true); // angle in degrees
-
+  cv.magnitude(dx, dy, mag); cv.phase(dx, dy, ang, true);
   const rows = mag.rows, cols = mag.cols;
-
-  // -------- Non-Maximum Suppression (4 dirs) on float matrices --------
   const nms = cv.Mat.zeros(rows, cols, cv.CV_32F);
   const M = mag.data32F, A = ang.data32F, N = nms.data32F;
-
   for (let y = 1; y < rows - 1; y++) {
     const r = y * cols;
     for (let x = 1; x < cols - 1; x++) {
-      const i = r + x;
-      let a = A[i];
-      if (a < 0) a += 180;
-      if (a >= 180) a -= 180;
-
+      const i = r + x; let a = A[i];
+      if (a < 0) a += 180; if (a >= 180) a -= 180;
       let o1 = 0, o2 = 0;
-      if (a < 22.5 || a >= 157.5)      { o1 = -1;           o2 = +1; }
-      else if (a < 67.5)               { o1 = -cols - 1;    o2 = +cols + 1; }
-      else if (a < 112.5)              { o1 = -cols;        o2 = +cols; }
-      else                             { o1 = -cols + 1;    o2 = +cols - 1; }
-
+      if (a < 22.5 || a >= 157.5) { o1 = -1; o2 = +1; }
+      else if (a < 67.5) { o1 = -cols - 1; o2 = +cols + 1; }
+      else if (a < 112.5) { o1 = -cols; o2 = +cols; }
+      else { o1 = -cols + 1; o2 = +cols - 1; }
       const m = M[i];
       if (m >= M[i + o1] && m >= M[i + o2]) N[i] = m;
     }
   }
-
-  // Normalize to 8U for thresholding
   const nms8 = new cv.Mat();
   cv.normalize(nms, nms, 0, 255, cv.NORM_MINMAX);
   nms.convertTo(nms8, cv.CV_8U);
-
-  // -------- Hysteresis via morphology (no manual array walking) --------
-  // Auto thresholds (percentiles) if toggle is missing or checked
   let high = 40, low = 15;
-  const auto = (!els.edgeAuto || els.edgeAuto.checked);
-  if (auto) {
+  if (!els.edgeAuto || els.edgeAuto.checked) {
     high = percentileFrom8U(nms8, 85);
     low  = Math.max(5, Math.round(0.4 * high));
     if (els.edgeHigh) els.edgeHigh.value = String(high);
@@ -377,64 +280,36 @@ function edgeSimple(src, returnBinary = true) {
   } else {
     high = +els.edgeHigh.value; low = +els.edgeLow.value;
   }
-
-  // strong = nms8 >= high;  weakOnly = low<=nms8<high
-  const strong = new cv.Mat(), weak = new cv.Mat(), weakOnly = new cv.Mat();
-  cv.threshold(nms8, strong, high, 255, cv.THRESH_BINARY);
-  cv.threshold(nms8, weak,   low,  255, cv.THRESH_BINARY);
-  cv.subtract(weak, strong, weakOnly); // remove strong from weak
-
-  // propagate: iteratively add weak neighbors touching strong
-  const connected = strong.clone();
-  const kernel = cv.Mat.ones(3,3,cv.CV_8U);
-  const dil = new cv.Mat(), add = new cv.Mat();
-
-  for (let it = 0; it < 12; it++) { // few iterations are enough
-    cv.dilate(connected, dil, kernel);
-    cv.bitwise_and(dil, weakOnly, add);
-    const nz = cv.countNonZero(add);
-    if (nz === 0) break;
-    cv.bitwise_or(connected, add, connected);
-    cv.subtract(weakOnly, add, weakOnly);
+  const edges = cv.Mat.zeros(rows, cols, cv.CV_8U);
+  const D = nms8.data, E = edges.data; const STR=255, WEAK=128;
+  for (let i = 0; i < D.length; i++) { const v = D[i]; if (v >= high) E[i] = STR; else if (v >= low) E[i] = WEAK; }
+  const stack = [];
+  for (let i = 0; i < E.length; i++) if (E[i] === STR) stack.push(i);
+  while (stack.length) {
+    const p = stack.pop(); const y = (p/cols)|0, x = p - y*cols;
+    for (let yy = y-1; yy <= y+1; yy++) for (let xx = x-1; xx <= x+1; xx++) {
+      if (yy<=0||yy>=rows-1||xx<=0||xx>=cols-1) continue;
+      const q = yy*cols + xx;
+      if (E[q] === WEAK) { E[q] = STR; stack.push(q); }
+    }
   }
-
-  // final edges
-  const edges = connected; // already 0/255
-
-  // Optional: thicken a bit so it’s visible on high-res photos
-  const kernel2 = cv.Mat.ones(3,3,cv.CV_8U);
-  cv.dilate(edges, edges, kernel2);
-  kernel2.delete();
-
-  // Output image
-  let out;
+  for (let i = 0; i < E.length; i++) E[i] = (E[i] === STR) ? 255 : 0;
+  const kernel = cv.Mat.ones(3,3,cv.CV_8U); cv.dilate(edges, edges, kernel); kernel.delete();
   if (returnBinary || (els.edgeBinary && els.edgeBinary.checked)) {
-    out = new cv.Mat();
-    cv.cvtColor(edges, out, cv.COLOR_GRAY2RGB);
+    const out = new cv.Mat(); cv.cvtColor(edges, out, cv.COLOR_GRAY2RGB);
+    gray.delete(); dx.delete(); dy.delete(); mag.delete(); ang.delete(); nms.delete(); nms8.delete(); work.delete();
+    return { out, count: cv.countNonZero(edges) };
   } else {
     const base = new cv.Mat();
     cv.cvtColor(work, base, cv.COLOR_RGBA2RGB);
     const red = new cv.Mat(base.rows, base.cols, cv.CV_8UC3, new cv.Scalar(255,0,0,0));
-    const edgeRGB = new cv.Mat();
-    red.copyTo(edgeRGB, edges);
-    out = new cv.Mat();
-    cv.addWeighted(base, 0.6, edgeRGB, 1.0, 0, out);
-    base.delete(); red.delete(); edgeRGB.delete();
+    const edgeRGB = new cv.Mat(); red.copyTo(edgeRGB, edges);
+    const out = new cv.Mat(); cv.addWeighted(base, 0.6, edgeRGB, 1.0, 0, out);
+    const count = cv.countNonZero(edges);
+    gray.delete(); dx.delete(); dy.delete(); mag.delete(); ang.delete(); nms.delete(); nms8.delete(); edges.delete(); base.delete(); red.delete(); edgeRGB.delete(); work.delete();
+    return { out, count };
   }
-
-  // Count edges before cleanup
-  const edgeCount = cv.countNonZero(edges);
-
-  // cleanup
-  gray.delete(); dx.delete(); dy.delete(); mag.delete(); ang.delete();
-  nms.delete(); nms8.delete(); strong.delete(); weak.delete(); weakOnly.delete();
-  kernel.delete(); dil.delete(); add.delete(); edges.delete(); work.delete();
-
-  return { out, count: edgeCount };
 }
-
-
-
 
 // ---------- Task 2: Corners (Harris + fallback) ----------
 function cornersHarris(src) {
@@ -579,300 +454,6 @@ function boundaryContour(src) {
     out.delete(); fillRGB.delete(); filled.delete(); mask.delete(); best.delete(); contours.delete(); work.delete();
     return { out: blended, info: `area=${Math.round(bestArea)} px, verts=${approx.rows}` };
   }
-}
-
-// ---------- Task 5: SAM2 Integration ----------
-let sam2Model = null;
-let sam2Ready = false;
-
-async function loadSAM2Model() {
-  if (sam2Ready && sam2Model) return true;
-  setStatus('Loading SAM2 model... This may take a moment.');
-  
-  try {
-    // Check if ONNX Runtime is available
-    if (typeof ort === 'undefined') {
-      // Try to load ONNX Runtime
-      const script = document.createElement('script');
-      script.src = 'https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js';
-      script.onload = async () => {
-        try {
-          // Note: SAM2 model file needs to be hosted or converted to ONNX format
-          // For now, we'll use a placeholder that can be replaced with actual SAM2 model
-          setStatus('ONNX Runtime loaded. SAM2 model conversion required for full functionality.');
-          sam2Ready = true;
-        } catch (e) {
-          console.error('SAM2 model load error:', e);
-          setStatus('SAM2 model not available. Using comparison mode with ArUco only.');
-          sam2Ready = false;
-        }
-      };
-      script.onerror = () => {
-        setStatus('Could not load ONNX Runtime. SAM2 comparison will use simulated results.');
-        sam2Ready = false;
-      };
-      document.head.appendChild(script);
-      return false;
-    }
-    
-    // If ONNX is available, try to load SAM2 model
-    // Note: In production, you'd need to host the converted SAM2 ONNX model
-    setStatus('SAM2 model loading interface ready. Model file required.');
-    sam2Ready = true;
-    return true;
-  } catch (e) {
-    console.error('SAM2 initialization error:', e);
-    setStatus('SAM2 initialization failed. Comparison will use ArUco results.');
-    sam2Ready = false;
-    return false;
-  }
-}
-
-function getArucoMask(src) {
-  // Extract mask from ArUco segmentation
-  const work = maybeResize(src);
-  const gray = new cv.Mat(); cv.cvtColor(work, gray, cv.COLOR_RGBA2GRAY);
-  
-  if (!arucoAvailable()) {
-    gray.delete(); work.delete();
-    return null;
-  }
-  
-  const dictName = els.arucoDict?.value || 'DICT_4X4_50';
-  const det = detectAruco(gray, dictName);
-  gray.delete();
-  
-  if (!det) {
-    work.delete();
-    return null;
-  }
-  
-  const pts = cornersToPointList(det.cornersVec, !!(els.arucoUseCorners?.checked));
-  det.idsMat.delete(); det.cornersVec.delete();
-  
-  if (pts.length < 3) {
-    work.delete();
-    return null;
-  }
-  
-  const contour = pointsToContourMat(pts);
-  const rows = work.rows, cols = work.cols;
-  const mask = cv.Mat.zeros(rows, cols, cv.CV_8U);
-  const mv = new cv.MatVector(); mv.push_back(contour);
-  cv.fillPoly(mask, mv, new cv.Scalar(255));
-  mv.delete(); contour.delete();
-  
-  const dil = Math.max(0, +(els.arucoDilate?.value || 0));
-  if (dil > 0) {
-    const k = cv.getStructuringElement(cv.MORPH_ELLIPSE, new cv.Size(dil, dil));
-    const tmp = new cv.Mat(); cv.dilate(mask, tmp, k);
-    mask.delete(); k.delete();
-    work.delete();
-    return tmp;
-  }
-  
-  work.delete();
-  return mask;
-}
-
-async function segSAM2(src, promptPoints = null, promptBox = null) {
-  // SAM2 segmentation - simulated implementation for comparison
-  // In production, this would use ONNX.js with actual SAM2 model
-  // Note: Full SAM2 requires model conversion to ONNX format
-  
-  if (!sam2Ready) {
-    await loadSAM2Model();
-  }
-  
-  const work = maybeResize(src);
-  const rows = work.rows, cols = work.cols;
-  
-  // If we have ArUco points, use them as prompts for SAM2
-  // Otherwise, try to auto-detect using ArUco markers
-  let prompts = promptPoints;
-  if (!prompts) {
-    const gray = new cv.Mat(); cv.cvtColor(work, gray, cv.COLOR_RGBA2GRAY);
-    const det = detectAruco(gray, els.arucoDict?.value || 'DICT_4X4_50');
-    gray.delete();
-    
-    if (det) {
-      const pts = cornersToPointList(det.cornersVec, true);
-      det.idsMat.delete(); det.cornersVec.delete();
-      prompts = pts.map(p => [p.x, p.y]);
-    }
-  }
-  
-  // Simulated SAM2 mask - simulates SAM2's superior boundary detection
-  // SAM2 typically produces smoother, more accurate boundaries than marker-based methods
-  let mask = cv.Mat.zeros(rows, cols, cv.CV_8U);
-  
-  if (prompts && prompts.length > 0) {
-    // Start with ArUco-based polygon
-    const tempMask = cv.Mat.zeros(rows, cols, cv.CV_8U);
-    const pts = prompts.map(p => new cv.Point(p[0], p[1]));
-    const contour = new cv.Mat(pts.length, 1, cv.CV_32SC2);
-    for (let i = 0; i < pts.length; i++) {
-      const ptr = contour.intPtr(i, 0);
-      ptr[0] = pts[i].x; ptr[1] = pts[i].y;
-    }
-    const mv = new cv.MatVector(); mv.push_back(contour);
-    cv.fillPoly(tempMask, mv, new cv.Scalar(255));
-    mv.delete(); contour.delete();
-    
-    // SAM2-style refinement: Use edge-aware refinement
-    // Simulate SAM2's ability to follow object boundaries more accurately
-    const gray = new cv.Mat(); cv.cvtColor(work, gray, cv.COLOR_RGBA2GRAY);
-    cv.GaussianBlur(gray, gray, new cv.Size(5, 5), 1.0);
-    
-    // Get edges for boundary refinement
-    const edges = new cv.Mat();
-    cv.Canny(gray, edges, 30, 100, 3, true);
-    
-    // Dilate the initial mask slightly to capture nearby edges
-    const kernel1 = cv.getStructuringElement(cv.MORPH_ELLIPSE, new cv.Size(7, 7));
-    const dilated = new cv.Mat();
-    cv.dilate(tempMask, dilated, kernel1);
-    
-    // Use edges to refine the mask boundary (SAM2-like behavior)
-    const refined = new cv.Mat();
-    cv.bitwise_and(dilated, edges, refined);
-    
-    // Close gaps and smooth
-    const kernel2 = cv.getStructuringElement(cv.MORPH_ELLIPSE, new cv.Size(3, 3));
-    cv.morphologyEx(tempMask, mask, cv.MORPH_CLOSE, kernel2);
-    
-    // Add edge-refined regions
-    cv.bitwise_or(mask, refined, mask);
-    
-    // Final smoothing to simulate SAM2's smooth boundaries
-    cv.morphologyEx(mask, mask, cv.MORPH_CLOSE, kernel2);
-    
-    // Cleanup
-    gray.delete(); edges.delete(); dilated.delete(); refined.delete();
-    tempMask.delete(); kernel1.delete(); kernel2.delete();
-  }
-  
-  work.delete();
-  return mask;
-}
-
-function calculateIoU(mask1, mask2) {
-  // Calculate Intersection over Union
-  if (!mask1 || !mask2) return 0;
-  if (mask1.rows !== mask2.rows || mask1.cols !== mask2.cols) return 0;
-  
-  const intersection = new cv.Mat();
-  cv.bitwise_and(mask1, mask2, intersection);
-  const union = new cv.Mat();
-  cv.bitwise_or(mask1, mask2, union);
-  
-  const interArea = cv.countNonZero(intersection);
-  const unionArea = cv.countNonZero(union);
-  
-  intersection.delete(); union.delete();
-  
-  return unionArea > 0 ? interArea / unionArea : 0;
-}
-
-function calculateMetrics(arucoMask, sam2Mask) {
-  if (!arucoMask || !sam2Mask) {
-    return { iou: 0, arucoArea: 0, sam2Area: 0, diff: 0 };
-  }
-  
-  const iou = calculateIoU(arucoMask, sam2Mask);
-  const arucoArea = cv.countNonZero(arucoMask);
-  const sam2Area = cv.countNonZero(sam2Mask);
-  
-  const diff = new cv.Mat();
-  cv.absdiff(arucoMask, sam2Mask, diff);
-  const diffArea = cv.countNonZero(diff);
-  diff.delete();
-  
-  return { iou, arucoArea, sam2Area, diffArea };
-}
-
-async function compareSegmentation(src) {
-  // Compare ArUco and SAM2 segmentation results
-  console.log('[Task 5] Starting comparison...');
-  const work = maybeResize(src);
-  const rgb = new cv.Mat(); cv.cvtColor(work, rgb, cv.COLOR_RGBA2RGB);
-  
-  // Get ArUco mask
-  console.log('[Task 5] Getting ArUco mask...');
-  const arucoMask = getArucoMask(src);
-  console.log('[Task 5] ArUco mask:', arucoMask ? `Found (${arucoMask.rows}x${arucoMask.cols})` : 'Not found');
-  
-  // Get SAM2 mask
-  console.log('[Task 5] Getting SAM2 mask...');
-  const sam2Mask = await segSAM2(src);
-  console.log('[Task 5] SAM2 mask:', sam2Mask ? `Found (${sam2Mask.rows}x${sam2Mask.cols})` : 'Not found');
-  
-  if (!arucoMask || !sam2Mask) {
-    console.warn('[Task 5] Missing masks - ArUco:', !!arucoMask, 'SAM2:', !!sam2Mask);
-    const out = rgb.clone();
-    overlayModeLabel('COMPARE – MISSING MASKS');
-    if (arucoMask) arucoMask.delete();
-    if (sam2Mask) sam2Mask.delete();
-    work.delete(); rgb.delete();
-    return { out, metrics: null };
-  }
-  
-  // Calculate metrics
-  console.log('[Task 5] Calculating metrics...');
-  const metrics = calculateMetrics(arucoMask, sam2Mask);
-  console.log('[Task 5] Metrics:', metrics);
-  
-  // Create comparison visualization
-  const rows = work.rows, cols = work.cols;
-  const comparison = new cv.Mat(rows, cols * 3, cv.CV_8UC3);
-  
-  // Left: ArUco result
-  const arucoRGB = new cv.Mat();
-  cv.cvtColor(arucoMask, arucoRGB, cv.COLOR_GRAY2RGB);
-  const arucoOverlay = rgb.clone();
-  const arucoFill = new cv.Mat(rows, cols, cv.CV_8UC3, new cv.Scalar(0, 255, 0, 0));
-  const arucoFilled = new cv.Mat();
-  arucoFill.copyTo(arucoFilled, arucoMask);
-  cv.addWeighted(arucoOverlay, 0.65, arucoFilled, 0.35, 0, arucoOverlay);
-  arucoOverlay.copyTo(comparison.roi(new cv.Rect(0, 0, cols, rows)));
-  
-  // Middle: SAM2 result
-  const sam2RGB = new cv.Mat();
-  cv.cvtColor(sam2Mask, sam2RGB, cv.COLOR_GRAY2RGB);
-  const sam2Overlay = rgb.clone();
-  const sam2Fill = new cv.Mat(rows, cols, cv.CV_8UC3, new cv.Scalar(255, 0, 0, 0));
-  const sam2Filled = new cv.Mat();
-  sam2Fill.copyTo(sam2Filled, sam2Mask);
-  cv.addWeighted(sam2Overlay, 0.65, sam2Filled, 0.35, 0, sam2Overlay);
-  sam2Overlay.copyTo(comparison.roi(new cv.Rect(cols, 0, cols, rows)));
-  
-  // Right: Difference
-  const diffMask = new cv.Mat();
-  cv.absdiff(arucoMask, sam2Mask, diffMask);
-  const diffRGB = new cv.Mat();
-  cv.cvtColor(diffMask, diffRGB, cv.COLOR_GRAY2RGB);
-  const diffOverlay = rgb.clone();
-  const diffFill = new cv.Mat(rows, cols, cv.CV_8UC3, new cv.Scalar(255, 255, 0, 0));
-  const diffFilled = new cv.Mat();
-  diffFill.copyTo(diffFilled, diffMask);
-  cv.addWeighted(diffOverlay, 0.7, diffFilled, 0.3, 0, diffOverlay);
-  diffOverlay.copyTo(comparison.roi(new cv.Rect(cols * 2, 0, cols, rows)));
-  
-  // Add labels
-  cv.putText(comparison, 'ArUco', new cv.Point(10, 30), cv.FONT_HERSHEY_SIMPLEX, 1, new cv.Scalar(0, 255, 0, 255), 2);
-  cv.putText(comparison, 'SAM2', new cv.Point(cols + 10, 30), cv.FONT_HERSHEY_SIMPLEX, 1, new cv.Scalar(255, 0, 0, 255), 2);
-  cv.putText(comparison, 'Diff', new cv.Point(cols * 2 + 10, 30), cv.FONT_HERSHEY_SIMPLEX, 1, new cv.Scalar(255, 255, 0, 255), 2);
-  
-  // Cleanup
-  arucoMask.delete(); sam2Mask.delete();
-  arucoRGB.delete(); sam2RGB.delete(); diffRGB.delete();
-  arucoOverlay.delete(); sam2Overlay.delete(); diffOverlay.delete();
-  arucoFill.delete(); arucoFilled.delete(); sam2Fill.delete(); sam2Filled.delete();
-  diffFill.delete(); diffFilled.delete(); diffMask.delete();
-  work.delete(); rgb.delete();
-  
-  console.log('[Task 5] Comparison complete. IoU:', (metrics.iou * 100).toFixed(1) + '%');
-  return { out: comparison, metrics };
 }
 
 // ---------- Task 4: Segmentation – ArUco ----------
@@ -1079,12 +660,6 @@ async function renderCurrent() {
       } else if (mode === 'seg_aruco') {
         const { out: S, info } = segAruco(src);
         out = S; imshowFit(out); overlayModeLabel('SEG – ARUCO'); stats = info ? ` | ${info}` : '';
-      } else if (mode === 'compare_sam2') {
-        const { out: C, metrics } = await compareSegmentation(src);
-        out = C; imshowFit(out); overlayModeLabel('COMPARE – ARUCO vs SAM2');
-        if (metrics) {
-          stats = ` | IoU: ${(metrics.iou * 100).toFixed(1)}% | ArUco: ${metrics.arucoArea}px | SAM2: ${metrics.sam2Area}px | Diff: ${metrics.diffArea}px`;
-        }
       } else {
         drawBitmapToCanvas(bmp); overlayModeLabel('ORIGINAL');
       }
@@ -1156,7 +731,7 @@ els.camStop.onclick = () => { if (state.stream) { state.stream.getTracks().forEa
 // re-render on any knob change
 function re(){ renderCurrent(); }
 if (els.mode)        els.mode.onchange     = () => { state.mode = els.mode.value; re(); };
-['edgeBoost','halfRes','edgeLow','edgeHigh','edgeAuto','edgeBinary','hWin','hK','hTh','hHeat','bClose','bMinArea','bEps','bCenterR','arucoDict','arucoUseCorners','arucoShowIds','arucoDilate','sam2PromptType','sam2CompareMode']
+['edgeBoost','halfRes','edgeLow','edgeHigh','edgeAuto','edgeBinary','hWin','hK','hTh','hHeat','bClose','bMinArea','bEps','bCenterR','arucoDict','arucoUseCorners','arucoShowIds','arucoDilate']
   .forEach(id => { const el = els[id]; if (!el) return; if (el.type === 'range') el.oninput = re; else el.onchange = re; });
 if (els.edgeLow)  els.edgeLow.oninput  = () => { if (els.edgeAuto) els.edgeAuto.checked = false; re(); };
 if (els.edgeHigh) els.edgeHigh.oninput = () => { if (els.edgeAuto) els.edgeAuto.checked = false; re(); };
@@ -1369,63 +944,4 @@ els.exportAll4.onclick = async () => {
     await new Promise(r => setTimeout(r, 140));
   }
   setStatus(`Exported Task 4 outputs for ${state.images.length} image(s). If nothing downloaded, enable multiple downloads.`);
-};
-
-// ---------- Export All (Task 5): Comparison ----------
-els.exportAll5.onclick = async () => {
-  await waitForCV();
-  if (!state.images.length) { setStatus('Load images first, then try Export All (Task 5).'); return; }
-  
-  const off = document.createElement('canvas');
-  function saveMatAsPNG(mat, filename) {
-    off.width = mat.cols; off.height = mat.rows;
-    cv.imshow(off, mat);
-    const a = document.createElement('a');
-    a.download = filename; a.href = off.toDataURL('image/png'); try { a.click(); } catch {}
-  }
-  
-  setStatus('Exporting Task 5 comparison… your browser may ask to allow multiple downloads.');
-  
-  for (let i = 0; i < state.images.length; i++) {
-    const item = state.images[i];
-    const srcRGBA = getSrcMatFromBitmap(item.bitmap);
-    const stem = item.name.replace(/\.[^.]+$/, '');
-    
-    try {
-      const { out: comparison, metrics } = await compareSegmentation(srcRGBA);
-      saveMatAsPNG(comparison, `${stem}__compare_sam2.png`);
-      comparison.delete();
-      
-      // Also save individual masks for detailed analysis
-      const arucoMask = getArucoMask(srcRGBA);
-      const sam2Mask = await segSAM2(srcRGBA);
-      
-      if (arucoMask) {
-        const arucoRGB = new cv.Mat();
-        cv.cvtColor(arucoMask, arucoRGB, cv.COLOR_GRAY2RGB);
-        saveMatAsPNG(arucoRGB, `${stem}__aruco_mask_task5.png`);
-        arucoRGB.delete(); arucoMask.delete();
-      }
-      
-      if (sam2Mask) {
-        const sam2RGB = new cv.Mat();
-        cv.cvtColor(sam2Mask, sam2RGB, cv.COLOR_GRAY2RGB);
-        saveMatAsPNG(sam2RGB, `${stem}__sam2_mask_task5.png`);
-        sam2RGB.delete(); sam2Mask.delete();
-      }
-      
-      if (metrics) {
-        console.log(`${stem} metrics:`, metrics);
-      }
-    } catch (e) {
-      console.error('Task 5 export error on', item.name, e);
-      setStatus(`Task 5 export error on ${item.name}: ${e?.message || e}`);
-    } finally {
-      srcRGBA.delete();
-    }
-    
-    await new Promise(r => setTimeout(r, 150));
-  }
-  
-  setStatus(`Exported Task 5 comparison outputs for ${state.images.length} image(s).`);
 };

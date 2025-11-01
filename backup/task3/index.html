@@ -38,10 +38,6 @@
         <option value="corners_harris">Corner – Harris</option>
         <!-- Task 3 -->
         <option value="boundary_contour">Boundary – Contour (Task 3)</option>
-        <!-- Task 4 -->
-        <option value="seg_aruco">Segmentation – ArUco (Task 4)</option>
-        <!-- Task 5 -->
-        <option value="compare_sam2">Compare – ArUco vs SAM2 (Task 5)</option>
       </select>
 
       <!-- Common knobs -->
@@ -62,7 +58,7 @@
       <label class="btn" title="Use auto thresholds (percentile / Otsu)">
         <input type="checkbox" id="edgeAuto" checked> Auto
       </label>
-      <label class="btn" title="Show binary map (edges/masks)">
+      <label class="btn" title="Show binary map (edges or mask)">
         <input type="checkbox" id="edgeBinary"> Binary
       </label>
 
@@ -94,33 +90,9 @@
         CenterR% <input type="range" id="bCenterR" min="0" max="80" step="5" value="40" style="width:110px">
       </label>
 
-      <!-- Task 4 (ArUco) params -->
-      <label class="btn" title="ArUco dictionary">
-        Dict
-        <select id="arucoDict" style="width:140px">
-          <option value="DICT_4X4_50" selected>4x4_50</option>
-          <option value="DICT_5X5_100">5x5_100</option>
-          <option value="DICT_6X6_250">6x6_250</option>
-          <option value="DICT_7X7_1000">7x7_1000</option>
-          <option value="DICT_APRILTAG_36h11">AprilTag 36h11</option>
-        </select>
-      </label>
-      <label class="btn" title="Use all marker corners (on) or only centers (off)">
-        <input type="checkbox" id="arucoUseCorners" checked> Use Corners
-      </label>
-      <label class="btn" title="Draw marker IDs on overlay">
-        <input type="checkbox" id="arucoShowIds" checked> Show IDs
-      </label>
-      <label class="btn" title="Dilate the final mask by N pixels">
-        Dilate(px) <input type="range" id="arucoDilate" min="0" max="12" step="1" value="2" style="width:100px">
-      </label>
-
       <button id="save" disabled>Save PNG</button>
       <button id="exportAll1" disabled>Export All (Task 1)</button>
       <button id="exportAll2" disabled>Export All (Task 2)</button>
-      <button id="exportAll3" disabled>Export All (Task 3)</button>
-      <button id="exportAll4" disabled>Export All (Task 4)</button>
-      <button id="exportAll5" disabled>Export All (Task 5)</button>
     </div>
   </header>
 
@@ -133,6 +105,6 @@
   </main>
 
   <!-- Cache-bust the JS -->
-  <script src="app.js?v=task4-2"></script>
+  <script src="app.js?v=task3-1"></script>
 </body>
 </html>
