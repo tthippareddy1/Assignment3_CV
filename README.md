@@ -6,7 +6,9 @@ This web application implements 5 computer vision tasks for object segmentation 
 ## Quick Start
 
 1. **Open the Application**
-   - Open `index.html` in a web browser (Chrome/Firefox recommended)
+   - Navigate to `webapp/` directory
+   - Start a local web server: `python3 -m http.server 8000`
+   - Open browser to `http://localhost:8000`
    - Wait for "OpenCV ready" message
 
 2. **Load Images**
@@ -25,7 +27,7 @@ This web application implements 5 computer vision tasks for object segmentation 
 
 ## Task Documentation
 
-### [Task 1: Gradient and LoG](TASK1_GRADIENT.md)
+### [Task 1: Gradient and LoG](./TASK1_GRADIENT.md)
 **Gradient Magnitude, Gradient Angle, and Laplacian of Gaussian**
 
 - Compute gradient images (magnitude and angle)
@@ -39,7 +41,7 @@ This web application implements 5 computer vision tasks for object segmentation 
 
 ---
 
-### [Task 2: Edge and Corner Detection](TASK2_EDGES_CORNERS.md)
+### [Task 2: Edge and Corner Detection](./TASK2_EDGES_CORNERS.md)
 **Custom Edge Detection and Harris Corner Detection**
 
 - Implement edge detection with NMS and hysteresis
@@ -53,7 +55,7 @@ This web application implements 5 computer vision tasks for object segmentation 
 
 ---
 
-### [Task 3: Object Boundary Detection](TASK3_BOUNDARY.md)
+### [Task 3: Object Boundary Detection](./TASK3_BOUNDARY.md)
 **Contour-Based Boundary Detection**
 
 - Find exact object boundaries using contours
@@ -67,7 +69,7 @@ This web application implements 5 computer vision tasks for object segmentation 
 
 ---
 
-### [Task 4: ArUco Marker Segmentation](TASK4_ARUCO.md)
+### [Task 4: ArUco Marker Segmentation](./TASK4_ARUCO.md)
 **Marker-Based Object Segmentation**
 
 - Detect ArUco markers on object boundaries
@@ -85,7 +87,7 @@ This web application implements 5 computer vision tasks for object segmentation 
 
 ---
 
-### [Task 5: ArUco vs SAM2 Comparison](TASK5_COMPARISON.md)
+### [Task 5: ArUco vs SAM2 Comparison](./TASK5_COMPARISON.md)
 **Segmentation Method Comparison**
 
 - Compare ArUco (Task 4) with SAM2 segmentation
@@ -104,18 +106,43 @@ This web application implements 5 computer vision tasks for object segmentation 
 ## File Structure
 
 ```
-webapp/
-├── index.html          # Main HTML file
-├── app.js              # Application logic
-├── styles.css          # Styling
-├── README.md           # This file
-├── TASK1_GRADIENT.md    # Task 1 documentation
-├── TASK2_EDGES_CORNERS.md  # Task 2 documentation
-├── TASK3_BOUNDARY.md   # Task 3 documentation
-├── TASK4_ARUCO.md      # Task 4 documentation
-├── TASK5_COMPARISON.md # Task 5 documentation
-├── TESTING_GUIDE.md    # Comprehensive testing guide
-└── QUICK_TEST.md       # Quick verification checklist
+assignment3/
+├── README.md                    # Main documentation (this file)
+├── TASK1_GRADIENT.md            # Task 1 documentation
+├── TASK2_EDGES_CORNERS.md       # Task 2 documentation
+├── TASK3_BOUNDARY.md            # Task 3 documentation
+├── TASK4_ARUCO.md              # Task 4 documentation
+├── TASK5_COMPARISON.md         # Task 5 documentation
+│
+├── webapp/                      # Web application directory
+│   ├── index.html               # Main HTML file
+│   ├── app.js                   # Application logic (all 5 tasks)
+│   ├── styles.css               # Styling
+│   └── build_wasm/              # OpenCV.js build with ArUco support
+│       └── bin/
+│           ├── opencv.js        # OpenCV.js library (local build)
+│           ├── opencv_js.js     # OpenCV.js helper
+│           └── loader.js        # OpenCV.js loader
+│
+├── dataset/                     # Image datasets
+│   ├── base/                    # General images for Tasks 1-3
+│   │   └── IMG_01.JPG ...      # Base dataset images
+│   └── aruco/                   # ArUco marker images for Tasks 4-5
+│       ├── singlemarkersoriginal.jpg
+│       ├── marker42.png
+│       └── ...                  # ArUco marker images
+│
+├── outputs/                     # Exported results
+│   └── task1/                   # Task 1 outputs
+│       ├── grad_mag/            # Gradient magnitude results
+│       ├── grad_angle/          # Gradient angle results
+│       └── log/                 # LoG results
+│
+└── backup/                      # Backup files (previous versions)
+    ├── task1/
+    ├── task2/
+    ├── task3/
+    └── task4/
 ```
 
 ## Common Workflow
@@ -143,17 +170,37 @@ webapp/
 ## System Requirements
 
 - Modern web browser with JavaScript enabled
-- Internet connection (for OpenCV.js loading)
+- **Local web server required** (OpenCV.js files must be served, not opened via file://)
+- Python 3 (for `python3 -m http.server`) or Node.js (for `npx http-server`)
 - Sufficient RAM (for image processing)
 - Recommended: 4GB+ RAM for large images
+
+## Running the Application
+
+**Important:** You must run a local web server. Opening `index.html` directly via `file://` protocol will not work due to CORS restrictions and OpenCV.js loading requirements.
+
+### Quick Start:
+```bash
+cd webapp
+python3 -m http.server 8000
+```
+Then open `http://localhost:8000` in your browser.
+
+### Alternative (Node.js):
+```bash
+cd webapp
+npx http-server -p 8000
+```
 
 ## Troubleshooting
 
 ### OpenCV Not Loading
-- Check internet connection
-- Wait longer (first load takes time)
-- Try refreshing page
-- Check browser console for errors
+- **Verify local build exists**: Check `webapp/build_wasm/bin/opencv.js` file exists
+- **Check file paths**: Ensure `index.html` loads from correct path
+- **Wait longer**: First load takes time (OpenCV.js is large)
+- **Check browser console**: Look for 404 errors or loading messages
+- **Verify server**: Make sure you're running a local web server (not file://)
+- **Hard refresh**: Clear cache with Ctrl+Shift+R (Cmd+Shift+R on Mac)
 
 ### Images Not Loading
 - Use JPG or PNG format
