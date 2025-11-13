@@ -5,9 +5,24 @@
   <title>A3 – Computer Vision Demo</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="styles.css" />
-  <!-- OpenCV.js -->
-  <script async src="https://docs.opencv.org/4.x/opencv.js"></script>
+  <!-- OpenCV.js - Local build with ArUco support -->
+  <script>
+    window.Module = window.Module || {};
+    if (!window.Module.locateFile) {
+      window.Module.locateFile = function (path) {
+        if (path.startsWith('opencv')) {
+          return './build_wasm/bin/' + path;
+        }
+        return path;
+      };
+    }
+  </script>
+  <script src="build_wasm/bin/opencv.js"></script>
   <meta http-equiv="Cache-Control" content="no-store" />
+  <script>
+    // Ensure OpenCV script loads before app.js
+    console.log('[HTML] OpenCV script tag loaded');
+  </script>
 </head>
 <body>
   <header>
@@ -40,6 +55,8 @@
         <option value="boundary_contour">Boundary – Contour (Task 3)</option>
         <!-- Task 4 -->
         <option value="seg_aruco">Segmentation – ArUco (Task 4)</option>
+        <!-- Task 5 -->
+        <option value="compare_sam2">Compare – ArUco vs SAM2 (Task 5)</option>
       </select>
 
       <!-- Common knobs -->
@@ -118,6 +135,7 @@
       <button id="exportAll2" disabled>Export All (Task 2)</button>
       <button id="exportAll3" disabled>Export All (Task 3)</button>
       <button id="exportAll4" disabled>Export All (Task 4)</button>
+      <button id="exportAll5" disabled>Export All (Task 5)</button>
     </div>
   </header>
 
@@ -130,6 +148,6 @@
   </main>
 
   <!-- Cache-bust the JS -->
-  <script src="app.js?v=task4-2"></script>
+  <script src="app.js?v=task4-3"></script>
 </body>
 </html>

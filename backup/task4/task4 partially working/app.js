@@ -775,9 +775,7 @@ function boundaryContour(src) {
     const fillRGB = new cv.Mat(rows, cols, cv.CV_8UC3, new cv.Scalar(0, 255, 0, 0));
     const filled = new cv.Mat(); fillRGB.copyTo(filled, mask);
     const blended = new cv.Mat(); cv.addWeighted(out, 0.65, filled, 0.35, 0, blended);
-    const approxVec = new cv.MatVector(); approxVec.push_back(approx);
-    cv.polylines(blended, approxVec, true, new cv.Scalar(0, 255, 0, 255), 2, cv.LINE_AA);
-    approxVec.delete();
+    cv.polylines(blended, approx, true, new cv.Scalar(0, 255, 0, 255), 2, cv.LINE_AA);
     out.delete(); fillRGB.delete(); filled.delete(); mask.delete(); best.delete(); contours.delete(); work.delete();
     return { out: blended, info: `area=${Math.round(bestArea)} px, verts=${approx.rows}` };
   }
@@ -850,7 +848,7 @@ function getArucoMask(src) {
   }
   
   const pts = cornersToPointList(det.cornersVec, !!(els.arucoUseCorners?.checked));
-  det.idsMat.delete();
+  det.idsMat.delete(); det.cornersVec.delete();
   
   if (pts.length < 3) {
     work.delete();
@@ -899,7 +897,7 @@ async function segSAM2(src, promptPoints = null, promptBox = null) {
     
     if (det) {
       const pts = cornersToPointList(det.cornersVec, true);
-      det.idsMat.delete();
+      det.idsMat.delete(); det.cornersVec.delete();
       prompts = pts.map(p => [p.x, p.y]);
     }
   }
@@ -1112,15 +1110,9 @@ function detectAruco(gray, dictName) {
 function cornersToPointList(cornersVec, useCorners=true) {
   // Collect points either as marker centers or all 4 corners
   const pts = [];
-  const count = cornersVec.size ? cornersVec.size() : 0;
-  for (let i = 0; i < count; i++) {
+  for (let i = 0; i < cornersVec.size(); i++) {
     const c = cornersVec.get(i);
     const f = c.data32F || c.data32S || c.data;
-    if (!f || f.length < 8) {
-      console.warn('[Task 4] Invalid corner data at index', i);
-      c.delete();
-      continue;
-    }
     if (useCorners) {
       // push 4 corners
       for (let k = 0; k < 4; k++) pts.push({ x: Math.round(f[k*2]), y: Math.round(f[k*2 + 1]) });
@@ -1131,11 +1123,6 @@ function cornersToPointList(cornersVec, useCorners=true) {
       pts.push({ x: Math.round(x), y: Math.round(y) });
     }
     c.delete();
-  }
-  try {
-    cornersVec.delete();
-  } catch (err) {
-    console.warn('[Task 4] Unable to delete cornersVec:', err);
   }
   return pts;
 }
@@ -1156,16 +1143,11 @@ function segAruco(src) {
   const work = maybeResize(src); // allows half-res preview; exports use full-res path
   const rgb = new cv.Mat(); cv.cvtColor(work, rgb, cv.COLOR_RGBA2RGB);
   const gray = new cv.Mat(); cv.cvtColor(work, gray, cv.COLOR_RGBA2GRAY);
-  let workDeleted = false;
-  let rgbDeleted = false;
-  let grayDeleted = false;
 
   if (!arucoAvailable()) {
     const out = rgb.clone();
     overlayModeLabel('ARUCO MODULE MISSING');
-    gray.delete(); grayDeleted = true;
-    work.delete(); workDeleted = true;
-    rgb.delete(); rgbDeleted = true;
+    gray.delete(); work.delete(); rgb.delete();
     return { out, info: 'aruco-missing' };
   }
 
@@ -1174,78 +1156,67 @@ function segAruco(src) {
   if (!det) {
     const out = rgb.clone();
     overlayModeLabel('ARUCO – NONE');
-    gray.delete(); grayDeleted = true;
-    work.delete(); workDeleted = true;
-    rgb.delete(); rgbDeleted = true;
+    gray.delete(); work.delete(); rgb.delete();
     return { out, info: 'no-markers' };
   }
   const { cornersVec, idsMat } = det;
-  const useCorners = !!(els.arucoUseCorners?.checked);
-  const showIds = !!(els.arucoShowIds?.checked) && !els.edgeBinary?.checked;
-  const pts = [];
-  const detectedCount = typeof idsMat.rows === 'number' ? idsMat.rows : (cornersVec.size ? cornersVec.size() : 0);
-  console.log('[Task 4] Detected', detectedCount, 'markers');
 
   // Draw markers using API wrapper if available
   if (!els.edgeBinary?.checked) {
     try {
       if (arucoAPI && arucoAPI.draw) {
+        // Use API draw function
         arucoAPI.draw(rgb, cornersVec, idsMat);
       }
     } catch (e) {
       console.warn('API draw failed, using manual drawing:', e);
     }
-  }
-
-  const cornerCount = cornersVec.size ? cornersVec.size() : 0;
-  for (let i = 0; i < cornerCount; i++) {
-    const c = cornersVec.get(i);
-    const f = c.data32F || c.data32S || c.data;
-    if (!f || f.length < 8) {
-      console.warn('[Task 4] Missing corner data at index', i);
-      c.delete();
-      continue;
-    }
-
-    if (useCorners) {
-      for (let k = 0; k < 4; k++) {
-        pts.push({ x: Math.round(f[k*2]), y: Math.round(f[k*2 + 1]) });
+    
+    // Draw IDs (optional)
+    if (els.arucoShowIds?.checked) {
+      for (let i = 0; i < cornersVec.size(); i++) {
+        const c = cornersVec.get(i);
+        const f = c.data32F || c.data32S || c.data;
+        const id = idsMat.intAt ? idsMat.intAt(i, 0) : (idsMat.data32S ? idsMat.data32S[i] : i);
+        const cx = Math.round((f[0] + f[2] + f[4] + f[6]) * 0.25);
+        const cy = Math.round((f[1] + f[3] + f[5] + f[7]) * 0.25);
+        cv.putText(rgb, String(id), new cv.Point(cx, cy), cv.FONT_HERSHEY_SIMPLEX, 0.7, new cv.Scalar(0,255,255,255), 2, cv.LINE_AA);
+        c.delete();
       }
     } else {
-      const cx = (f[0] + f[2] + f[4] + f[6]) * 0.25;
-      const cy = (f[1] + f[3] + f[5] + f[7]) * 0.25;
-      pts.push({ x: Math.round(cx), y: Math.round(cy) });
+      // still need to free corner mats later if not already
+      for (let i = 0; i < cornersVec.size(); i++) cornersVec.get(i).delete();
     }
-
-    if (showIds) {
-      const id = idsMat.intAt ? idsMat.intAt(i, 0) : (idsMat.data32S ? idsMat.data32S[i] : i);
-      const tx = Math.round((f[0] + f[2] + f[4] + f[6]) * 0.25);
-      const ty = Math.round((f[1] + f[3] + f[5] + f[7]) * 0.25);
-      cv.putText(rgb, String(id), new cv.Point(tx, ty), cv.FONT_HERSHEY_SIMPLEX, 0.7, new cv.Scalar(0,255,255,255), 2, cv.LINE_AA);
-    }
-
-    c.delete();
+  } else {
+    // Binary mode - free corner mats
+    for (let i = 0; i < cornersVec.size(); i++) cornersVec.get(i).delete();
   }
-  cornersVec.delete();
-  idsMat.delete();
-  gray.delete(); grayDeleted = true;
 
-  console.log('[Task 4] Collected', pts.length, 'points');
+  // Re-detect (corner mats were deleted above); detect again to harvest points
+  const det2 = detectAruco(gray, dictName);
+  gray.delete();
+
+  if (!det2) {
+    const out = rgb.clone();
+    overlayModeLabel('ARUCO – NONE');
+    work.delete(); rgb.delete();
+    return { out, info: 'no-markers' };
+  }
+
+  const pts = cornersToPointList(det2.cornersVec, !!(els.arucoUseCorners?.checked));
+  det2.idsMat.delete(); det2.cornersVec.delete();
 
   if (pts.length < 3) {
     const out = rgb.clone();
     overlayModeLabel('ARUCO – TOO FEW PTS');
-    work.delete(); workDeleted = true;
-    rgb.delete(); rgbDeleted = true;
+    work.delete(); rgb.delete();
     return { out, info: 'few-points' };
   }
 
   const contour = pointsToContourMat(pts);
-  console.log('[Task 4] Creating contour from', pts.length, 'points');
 
   // Mask from polygon
   const rows = work.rows, cols = work.cols;
-  console.log('[Task 4] Creating mask', cols, 'x', rows);
   let mask = cv.Mat.zeros(rows, cols, cv.CV_8U);
   const mv = new cv.MatVector(); mv.push_back(contour);
   cv.fillPoly(mask, mv, new cv.Scalar(255)); mv.delete(); contour.delete();
@@ -1260,9 +1231,7 @@ function segAruco(src) {
   // Binary or overlay
   if (els.edgeBinary && els.edgeBinary.checked) {
     const maskRGB = new cv.Mat(); cv.cvtColor(mask, maskRGB, cv.COLOR_GRAY2RGB);
-    mask.delete();
-    work.delete(); workDeleted = true;
-    rgb.delete(); rgbDeleted = true;
+    mask.delete(); work.delete(); rgb.delete();
     return { out: maskRGB, info: `aruco pts=${pts.length}` };
   } else {
     const fillRGB = new cv.Mat(rows, cols, cv.CV_8UC3, new cv.Scalar(0, 255, 0, 0));
@@ -1271,19 +1240,11 @@ function segAruco(src) {
 
     // Outline (polyline from ordered points)
     const outline = pointsToContourMat(pts);
-    const outlineVec = new cv.MatVector();
-    outlineVec.push_back(outline);
-    // Verify MatVector is valid before calling polylines
-    if (outlineVec.size() > 0) {
-      cv.polylines(blended, outlineVec, true, new cv.Scalar(0,255,0,255), 2, cv.LINE_AA);
-    }
-    outlineVec.delete();
+    cv.polylines(blended, outline, true, new cv.Scalar(0,255,0,255), 2, cv.LINE_AA);
     outline.delete();
 
     // cleanup
-    fillRGB.delete(); filled.delete(); mask.delete();
-    work.delete(); workDeleted = true;
-    rgb.delete(); rgbDeleted = true;
+    fillRGB.delete(); filled.delete(); mask.delete(); work.delete(); rgb.delete();
 
     return { out: blended, info: `aruco pts=${pts.length}` };
   }
@@ -1512,9 +1473,7 @@ function computeBoundaryMaskAndOverlay(srcRGBA) {
     const fillRGB = new cv.Mat(rows, cols, cv.CV_8UC3, new cv.Scalar(0, 255, 0, 0));
     const filled = new cv.Mat(); fillRGB.copyTo(filled, mask);
     const blended = new cv.Mat(); cv.addWeighted(overlay, 0.65, filled, 0.35, 0, blended);
-    const approxVec = new cv.MatVector(); approxVec.push_back(approx);
-    cv.polylines(blended, approxVec, true, new cv.Scalar(0, 255, 0, 255), 2, cv.LINE_AA);
-    approxVec.delete();
+    cv.polylines(blended, approx, true, new cv.Scalar(0, 255, 0, 255), 2, cv.LINE_AA);
     overlay.delete(); fillRGB.delete(); filled.delete(); overlay = blended;
     best.delete(); approx.delete();
   }
@@ -1579,7 +1538,7 @@ els.exportAll4.onclick = async () => {
         gray.delete();
         if (!det) { rgb.delete(); return { mask: cv.Mat.zeros(srcRGBA.rows, srcRGBA.cols, cv.CV_8U), overlay: rgb }; }
         const pts = cornersToPointList(det.cornersVec, !!(els.arucoUseCorners?.checked));
-        det.idsMat.delete();
+        det.idsMat.delete(); det.cornersVec.delete();
         const mask = cv.Mat.zeros(srcRGBA.rows, srcRGBA.cols, cv.CV_8U);
         let overlay = rgb.clone();
         if (pts.length >= 3) {
@@ -1592,10 +1551,8 @@ els.exportAll4.onclick = async () => {
           const filled = new cv.Mat(); fillRGB.copyTo(filled, mask);
           const blended = new cv.Mat(); cv.addWeighted(overlay, 0.65, filled, 0.35, 0, blended);
           const outline = pointsToContourMat(pts);
-          const outlineVec = new cv.MatVector(); outlineVec.push_back(outline);
-          cv.polylines(blended, outlineVec, true, new cv.Scalar(0,255,0,255), 2, cv.LINE_AA);
-          outlineVec.delete(); outline.delete();
-          overlay.delete(); fillRGB.delete(); filled.delete();
+          cv.polylines(blended, outline, true, new cv.Scalar(0,255,0,255), 2, cv.LINE_AA);
+          overlay.delete(); fillRGB.delete(); filled.delete(); outline.delete();
           overlay = blended;
         }
         rgb.delete();
